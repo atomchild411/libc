@@ -584,6 +584,23 @@ pub const ST_NOTRUNC: c_ulong = 4;
 pub const ST_NODEV: c_ulong = 0x20000000;
 pub const AF_ISO: c_int = 7;
 pub const AF_DECnet: c_int = 12;
+pub const _PC_LINK_MAX: c_int = 1;
+pub const _PC_MAX_CANON: c_int = 2;
+pub const _PC_MAX_INPUT: c_int = 3;
+pub const _PC_NAME_MAX: c_int = 4;
+pub const _PC_PATH_MAX: c_int = 5;
+pub const _PC_PIPE_BUF: c_int = 6;
+pub const _PC_CHOWN_RESTRICTED: c_int = 7;
+pub const _PC_NO_TRUNC: c_int = 8;
+pub const _PC_VDISABLE: c_int = 9;
+pub const _PC_SYNC_IO: c_int = 10;
+pub const _PC_PRIO_IO: c_int = 11;
+pub const _PC_ASYNC_IO: c_int = 64;
+pub const _PC_FILESIZEBITS: c_int = 67;
+pub const XCASE: crate::tcflag_t = 4;
+pub const MAP_FILE: c_int = 0;
+pub const MAP_AUTORESRV: c_int = 0x100;
+pub const LOG_PERROR: c_int = 0x20;
 /// IRIX's (the constant generator's name list missed it).
 pub const SO_REUSEPORT: c_int = 0x0200;
 /// The RFC 2553 names, as the toolchain's `IPV6_JOIN_GROUP`/`IPV6_LEAVE_GROUP` (IRIX has no IPv6).
