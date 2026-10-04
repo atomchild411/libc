@@ -508,6 +508,11 @@ safe_f! {
 pub const PTHREAD_STACK_MIN: size_t = 16384;
 pub const F_DUPFD_CLOEXEC: c_int = 1030;
 pub const PTHREAD_ONCE_INIT: pthread_once_t = 0;
+/// IRIX's (the constant generator's name list missed it).
+pub const SO_REUSEPORT: c_int = 0x0200;
+/// The RFC 2553 names, as the toolchain's `IPV6_JOIN_GROUP`/`IPV6_LEAVE_GROUP` (IRIX has no IPv6).
+pub const IPV6_ADD_MEMBERSHIP: c_int = IPV6_JOIN_GROUP;
+pub const IPV6_DROP_MEMBERSHIP: c_int = IPV6_LEAVE_GROUP;
 /// The POSIX names for IRIX's `_SC_NPROC_*`.
 pub const _SC_NPROCESSORS_CONF: c_int = _SC_NPROC_CONF;
 pub const _SC_NPROCESSORS_ONLN: c_int = _SC_NPROC_ONLN;
