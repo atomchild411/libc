@@ -186,6 +186,9 @@ members = [
 [workspace.lints.rust]
 # FIXME(cleanup): make ident usage consistent in each file
 unused_qualifications = "allow"
+# s! adds repr(C) to structs that also carry their own repr; newer rustc warns, and std's build
+# (which uses this fork by path, as a local crate) denies warnings.
+repeated_reprs = "allow"
 
 [workspace.lints.clippy]
 # Enable pedantic lints - use this manually once in a while, but don't enable by default
