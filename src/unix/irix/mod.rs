@@ -326,7 +326,7 @@ s! {
         __D: [c_long; 4],
     }
 
-    #[repr(align(8))]
+    // 8-aligned, as IRIX's, by its u64s.
     pub struct sem_t {
         sem_reserved: [u64; 8],
     }
