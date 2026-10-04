@@ -29,7 +29,7 @@ cfg_if! {
     ))] {
         pub type uid_t = c_ushort;
         pub type gid_t = c_ushort;
-    } else if #[cfg(any(target_os = "nto", target_os = "qnx"))] {
+    } else if #[cfg(any(target_os = "nto", target_os = "qnx", target_os = "irix"))] {
         pub type uid_t = i32;
         pub type gid_t = i32;
     } else {

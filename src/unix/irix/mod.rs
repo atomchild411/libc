@@ -10,6 +10,7 @@
 //! IRIX has no IPv6: the IPv6 types exist so code compiles, and fail at run time.
 
 use crate::prelude::*;
+use crate::{gid_t, uid_t};
 
 pub type wchar_t = i32;
 
@@ -20,8 +21,6 @@ pub type off_t = i64;
 pub type off64_t = i64;
 pub type mode_t = u32;
 pub type nlink_t = u32;
-pub type uid_t = i32;
-pub type gid_t = i32;
 pub type pid_t = i32;
 pub type id_t = i32;
 pub type key_t = c_int;
@@ -359,8 +358,8 @@ pub const PTHREAD_COND_INITIALIZER: pthread_cond_t = pthread_cond_t { __D: [0; 8
 pub const PTHREAD_RWLOCK_INITIALIZER: pthread_rwlock_t = pthread_rwlock_t { __D: [0; 16] };
 
 
-// Generated from IRIX 6.5.22's headers with the toolchain's wrappers (N32).
-include!("consts.rs");
+mod consts;
+pub use self::consts::*;
 
 f! {
     pub unsafe fn FD_CLR(fd: c_int, set: *mut fd_set) -> () {
@@ -453,6 +452,13 @@ safe_f! {
     }
 }
 
+/// One page: IRIX's `sysconf(_SC_THREAD_STACK_MIN)` answers 0.
+pub const PTHREAD_STACK_MIN: size_t = 16384;
+pub const F_DUPFD_CLOEXEC: c_int = 1030;
+/// The POSIX names for IRIX's `_SC_NPROC_*`.
+pub const _SC_NPROCESSORS_CONF: c_int = _SC_NPROC_CONF;
+pub const _SC_NPROCESSORS_ONLN: c_int = _SC_NPROC_ONLN;
+
 extern "C" {
     /// The calling thread's `errno` (IRIX's libc keeps a per-thread copy here, and one global).
     pub fn __oserror() -> *mut c_int;
@@ -463,14 +469,6 @@ extern "C" {
     pub fn clock_getres(clk_id: clockid_t, tp: *mut crate::timespec) -> c_int;
     pub fn clock_settime(clk_id: clockid_t, tp: *const crate::timespec) -> c_int;
 
-    pub fn getaddrinfo(
-        node: *const c_char,
-        service: *const c_char,
-        hints: *const addrinfo,
-        res: *mut *mut addrinfo,
-    ) -> c_int;
-    pub fn freeaddrinfo(res: *mut addrinfo);
-    pub fn gai_strerror(errcode: c_int) -> *const c_char;
     pub fn getnameinfo(
         sa: *const crate::sockaddr,
         salen: socklen_t,
@@ -483,11 +481,50 @@ extern "C" {
 
     #[link_name = "__irix_recvmsg"]
     pub fn recvmsg(fd: c_int, msg: *mut msghdr, flags: c_int) -> ssize_t;
+    // The plain symbol takes the BSD msghdr (msg_accrights); this one the XPG one.
+    #[link_name = "__xpg4_sendmsg"]
     pub fn sendmsg(fd: c_int, msg: *const msghdr, flags: c_int) -> ssize_t;
+
+    // IRIX's own socket calls: their lengths are int, the same size as socklen_t on N32.
+    pub fn bind(socket: c_int, address: *const crate::sockaddr, address_len: socklen_t) -> c_int;
+    pub fn recvfrom(
+        socket: c_int,
+        buf: *mut c_void,
+        len: size_t,
+        flags: c_int,
+        addr: *mut crate::sockaddr,
+        addrlen: *mut socklen_t,
+    ) -> ssize_t;
+    pub fn readv(fd: c_int, iov: *const crate::iovec, iovcnt: c_int) -> ssize_t;
+    pub fn writev(fd: c_int, iov: *const crate::iovec, iovcnt: c_int) -> ssize_t;
+    pub fn setgroups(ngroups: c_int, ptr: *const crate::gid_t) -> c_int;
+
+    pub fn pthread_create(
+        native: *mut crate::pthread_t,
+        attr: *const crate::pthread_attr_t,
+        f: extern "C" fn(*mut c_void) -> *mut c_void,
+        value: *mut c_void,
+    ) -> c_int;
+    pub fn pthread_sigmask(how: c_int, set: *const sigset_t, oldset: *mut sigset_t) -> c_int;
+    pub fn pthread_kill(thread: crate::pthread_t, sig: c_int) -> c_int;
+    pub fn pthread_atfork(
+        prepare: Option<unsafe extern "C" fn()>,
+        parent: Option<unsafe extern "C" fn()>,
+        child: Option<unsafe extern "C" fn()>,
+    ) -> c_int;
+
+    // POSIX 2008 calls IRIX lacks, from our compiler-rt's IRIX builtins.
+    pub fn dirfd(dirp: *mut crate::DIR) -> c_int;
+    pub fn readlinkat(dirfd: c_int, pathname: *const c_char, buf: *mut c_char, bufsiz: size_t) -> ssize_t;
+    pub fn utimensat(
+        dirfd: c_int,
+        path: *const c_char,
+        times: *const crate::timespec,
+        flag: c_int,
+    ) -> c_int;
 
     pub fn dladdr(addr: *const c_void, info: *mut Dl_info) -> c_int;
 
-    pub fn pthread_condattr_setclock(attr: *mut pthread_condattr_t, clock_id: clockid_t) -> c_int;
     pub fn sem_timedwait(sem: *mut sem_t, abstime: *const crate::timespec) -> c_int;
     pub fn getentropy(buf: *mut c_void, buflen: size_t) -> c_int;
     pub fn arc4random_buf(buf: *mut c_void, nbytes: size_t);
@@ -530,7 +567,6 @@ extern "C" {
         newfd: c_int,
     ) -> c_int;
 
-    pub fn sysctl(name: *mut c_int, namelen: c_uint, oldp: *mut c_void, oldlenp: *mut size_t, newp: *mut c_void, newlen: size_t) -> c_int;
     pub fn sigaltstack(ss: *const stack_t, oss: *mut stack_t) -> c_int;
     pub fn ioctl(fd: c_int, request: c_int, ...) -> c_int;
     pub fn getpwuid_r(
@@ -542,8 +578,6 @@ extern "C" {
     ) -> c_int;
     pub fn strerror_r(errnum: c_int, buf: *mut c_char, buflen: size_t) -> c_int;
     pub fn memalign(align: size_t, size: size_t) -> *mut c_void;
-    pub fn posix_memalign(memptr: *mut *mut c_void, align: size_t, size: size_t) -> c_int;
     pub fn madvise(addr: *mut c_void, len: size_t, advice: c_int) -> c_int;
     pub fn settimeofday(tp: *const crate::timeval, tz: *const c_void) -> c_int;
-    pub fn sched_yield() -> c_int;
 }
