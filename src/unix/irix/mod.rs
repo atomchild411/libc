@@ -375,6 +375,16 @@ s! {
         pub ifa_data: *mut c_void,
     }
 
+    pub struct flock {
+        pub l_type: c_short,
+        pub l_whence: c_short,
+        pub l_start: crate::off_t,
+        pub l_len: crate::off_t,
+        pub l_sysid: c_long,
+        pub l_pid: crate::pid_t,
+        l_pad: [c_long; 4],
+    }
+
     /// The toolchain's `<getopt.h>`.
     pub struct option {
         pub name: *const c_char,
