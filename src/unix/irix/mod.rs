@@ -568,7 +568,6 @@ extern "C" {
 
     // POSIX 2008 calls IRIX lacks, from our compiler-rt's IRIX builtins.
     pub fn dirfd(dirp: *mut crate::DIR) -> c_int;
-    pub fn readlinkat(dirfd: c_int, pathname: *const c_char, buf: *mut c_char, bufsiz: size_t) -> ssize_t;
     pub fn utimensat(
         dirfd: c_int,
         path: *const c_char,
@@ -576,7 +575,6 @@ extern "C" {
         flag: c_int,
     ) -> c_int;
 
-    pub fn dladdr(addr: *const c_void, info: *mut Dl_info) -> c_int;
 
     pub fn sem_timedwait(sem: *mut sem_t, abstime: *const crate::timespec) -> c_int;
     pub fn getentropy(buf: *mut c_void, buflen: size_t) -> c_int;
