@@ -1095,4 +1095,45 @@ extern "C" {
     pub fn gettimeofday(tp: *mut crate::timeval, tz: *mut c_void) -> c_int;
     pub fn pthread_once(control: *mut pthread_once_t, routine: extern "C" fn()) -> c_int;
     pub fn flock(fd: c_int, operation: c_int) -> c_int;
+
+    // From the toolchain's compiler-rt IRIX builtins.
+    pub fn asprintf(strp: *mut *mut c_char, fmt: *const c_char, ...) -> c_int;
+    pub fn dprintf(fd: c_int, format: *const c_char, ...) -> c_int;
+    pub fn err(eval: c_int, fmt: *const c_char, ...) -> !;
+    pub fn errx(eval: c_int, fmt: *const c_char, ...) -> !;
+    pub fn warn(fmt: *const c_char, ...);
+    pub fn warnx(fmt: *const c_char, ...);
+    pub fn explicit_bzero(s: *mut c_void, len: size_t);
+    pub fn getdelim(
+        lineptr: *mut *mut c_char,
+        n: *mut size_t,
+        delimiter: c_int,
+        stream: *mut crate::FILE,
+    ) -> ssize_t;
+    pub fn getopt_long_only(
+        argc: c_int,
+        argv: *const *mut c_char,
+        optstring: *const c_char,
+        longopts: *const crate::option,
+        longindex: *mut c_int,
+    ) -> c_int;
+    pub fn lchmod(path: *const c_char, mode: crate::mode_t) -> c_int;
+    /// Waits at most `timeout` (relative, so the date does not matter): IRIX has no
+    /// `pthread_condattr_setclock` to make absolute timeouts monotonic.
+    pub fn pthread_cond_timedwait_relative_np(
+        cond: *mut crate::pthread_cond_t,
+        lock: *mut crate::pthread_mutex_t,
+        timeout: *const crate::timespec,
+    ) -> c_int;
+    pub fn reallocarray(ptr: *mut c_void, nmemb: size_t, size: size_t) -> *mut c_void;
+    pub fn strlcat(dst: *mut c_char, src: *const c_char, siz: size_t) -> size_t;
+    pub fn strlcpy(dst: *mut c_char, src: *const c_char, siz: size_t) -> size_t;
+    pub fn strtonum(
+        nptr: *const c_char,
+        minval: c_longlong,
+        maxval: c_longlong,
+        errstr: *mut *const c_char,
+    ) -> c_longlong;
+    pub fn get_nprocs() -> c_int;
+    pub fn get_nprocs_conf() -> c_int;
 }
