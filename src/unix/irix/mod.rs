@@ -50,6 +50,7 @@ pub type pthread_key_t = c_int;
 pub type pthread_once_t = c_int;
 pub type sighandler_t = size_t;
 pub type caddr_t = *mut c_char;
+pub type iconv_t = *mut c_void;
 
 s! {
     pub struct stat {
@@ -329,6 +330,57 @@ s! {
     pub struct sem_t {
         sem_reserved: [u64; 8],
     }
+
+    pub struct itimerspec {
+        pub it_interval: crate::timespec,
+        pub it_value: crate::timespec,
+    }
+
+    pub struct sigevent {
+        pub sigev_notify: c_int,
+        /// A union in IRIX's header with the notification function, which `sigev_notify_function`
+        /// also holds.
+        pub sigev_signo: c_int,
+        pub sigev_value: crate::sigval,
+        pub sigev_notify_function: Option<extern "C" fn(crate::sigval)>,
+        pub sigev_notify_attributes: *mut crate::pthread_attr_t,
+        sigev_reserved: [c_ulong; 11],
+        sigev_pad: [c_ulong; 6],
+    }
+
+    pub struct sembuf {
+        pub sem_num: c_ushort,
+        pub sem_op: c_short,
+        pub sem_flg: c_short,
+    }
+
+    pub struct mntent {
+        pub mnt_fsname: *mut c_char,
+        pub mnt_dir: *mut c_char,
+        pub mnt_type: *mut c_char,
+        pub mnt_opts: *mut c_char,
+        pub mnt_freq: c_int,
+        pub mnt_passno: c_int,
+    }
+
+    /// The toolchain's `<ifaddrs.h>` (IRIX has none).
+    pub struct ifaddrs {
+        pub ifa_next: *mut ifaddrs,
+        pub ifa_name: *mut c_char,
+        pub ifa_flags: c_uint,
+        pub ifa_addr: *mut crate::sockaddr,
+        pub ifa_netmask: *mut crate::sockaddr,
+        pub ifa_dstaddr: *mut crate::sockaddr,
+        pub ifa_data: *mut c_void,
+    }
+
+    /// The toolchain's `<getopt.h>`.
+    pub struct option {
+        pub name: *const c_char,
+        pub has_arg: c_int,
+        pub flag: *mut c_int,
+        pub val: c_int,
+    }
 }
 
 impl siginfo_t {
@@ -455,6 +507,7 @@ safe_f! {
 /// One page: IRIX's `sysconf(_SC_THREAD_STACK_MIN)` answers 0.
 pub const PTHREAD_STACK_MIN: size_t = 16384;
 pub const F_DUPFD_CLOEXEC: c_int = 1030;
+pub const PTHREAD_ONCE_INIT: pthread_once_t = 0;
 /// The POSIX names for IRIX's `_SC_NPROC_*`.
 pub const _SC_NPROCESSORS_CONF: c_int = _SC_NPROC_CONF;
 pub const _SC_NPROCESSORS_ONLN: c_int = _SC_NPROC_ONLN;
@@ -580,4 +633,369 @@ extern "C" {
     pub fn memalign(align: size_t, size: size_t) -> *mut c_void;
     pub fn madvise(addr: *mut c_void, len: size_t, advice: c_int) -> c_int;
     pub fn settimeofday(tp: *const crate::timeval, tz: *const c_void) -> c_int;
+}
+
+// Generated from clang's AST of the IRIX headers as this target's C toolchain sees them (header
+// wrappers included), with parameter names borrowed from libc's other platforms.
+extern "C" {
+    pub fn abs(i: c_int) -> c_int;
+    pub fn acct(filename: *const c_char) -> c_int;
+    pub fn arc4random() -> c_uint;
+    pub fn arc4random_uniform(l: c_uint) -> c_uint;
+    pub fn basename(path: *mut c_char) -> *mut c_char;
+    pub fn brk(addr: *mut c_void) -> c_int;
+    pub fn ctermid(s: *mut c_char) -> *mut c_char;
+    pub fn daemon(nochdir: c_int, noclose: c_int) -> c_int;
+    pub fn dirname(path: *mut c_char) -> *mut c_char;
+    pub fn drand48() -> c_double;
+    pub fn duplocale(base: crate::locale_t) -> crate::locale_t;
+    pub fn endgrent();
+    pub fn endmntent(streamp: *mut crate::FILE) -> c_int;
+    pub fn endpwent();
+    pub fn erand48(arg1: *mut c_ushort) -> c_double;
+    pub fn faccessat(dirfd: c_int, pathname: *const c_char, mode: c_int, flags: c_int) -> c_int;
+    pub fn fdatasync(fd: c_int) -> c_int;
+    pub fn ffs(arg1: c_int) -> c_int;
+    pub fn fgetgrent(file: *mut crate::FILE) -> *mut crate::group;
+    pub fn fgetpwent(file: *mut crate::FILE) -> *mut crate::passwd;
+    pub fn freeifaddrs(ifa: *mut crate::ifaddrs);
+    pub fn freelocale(loc: crate::locale_t);
+    pub fn ftok(pathname: *const c_char, proj_id: c_int) -> crate::key_t;
+    pub fn getdomainname(name: *mut c_char, len: c_int) -> c_int;
+    pub fn getdtablesize() -> c_int;
+    pub fn getgrent() -> *mut crate::group;
+    pub fn getgrgid(gid: crate::gid_t) -> *mut crate::group;
+    pub fn getgrgid_r(
+        gid: crate::gid_t,
+        grp: *mut crate::group,
+        buf: *mut c_char,
+        buflen: size_t,
+        result: *mut *mut crate::group,
+    ) -> c_int;
+    pub fn getgrnam(name: *const c_char) -> *mut crate::group;
+    pub fn getgrnam_r(
+        name: *const c_char,
+        grp: *mut crate::group,
+        buf: *mut c_char,
+        buflen: size_t,
+        result: *mut *mut crate::group,
+    ) -> c_int;
+    pub fn getgrouplist(
+        user: *const c_char,
+        group: crate::gid_t,
+        groups: *mut crate::gid_t,
+        ngroups: *mut c_int,
+    ) -> c_int;
+    pub fn gethostid() -> c_long;
+    pub fn getifaddrs(ifap: *mut *mut crate::ifaddrs) -> c_int;
+    pub fn getitimer(which: c_int, curr_value: *mut crate::itimerval) -> c_int;
+    pub fn getmntent(stream: *mut crate::FILE) -> *mut crate::mntent;
+    pub fn getopt_long(
+        argc: c_int,
+        argv: *const *mut c_char,
+        optstring: *const c_char,
+        longopts: *const crate::option,
+        longindex: *mut c_int,
+    ) -> c_int;
+    pub fn getpagesize() -> c_int;
+    pub fn getpriority(which: c_int, who: crate::id_t) -> c_int;
+    pub fn getprogname() -> *const c_char;
+    pub fn getpwent() -> *mut crate::passwd;
+    pub fn getpwnam_r(
+        name: *const c_char,
+        pwd: *mut crate::passwd,
+        buf: *mut c_char,
+        buflen: size_t,
+        result: *mut *mut crate::passwd,
+    ) -> c_int;
+    pub fn getrlimit(resource: c_int, rlim: *mut crate::rlimit) -> c_int;
+    pub fn hasmntopt(mnt: *const crate::mntent, opt: *const c_char) -> *mut c_char;
+    pub fn iconv(
+        cd: crate::iconv_t,
+        inbuf: *mut *mut c_char,
+        inbytesleft: *mut size_t,
+        outbuf: *mut *mut c_char,
+        outbytesleft: *mut size_t,
+    ) -> size_t;
+    pub fn iconv_close(cd: crate::iconv_t) -> c_int;
+    pub fn iconv_open(tocode: *const c_char, fromcode: *const c_char) -> crate::iconv_t;
+    pub fn initgroups(user: *const c_char, group: crate::gid_t) -> c_int;
+    pub fn jrand48(arg1: *mut c_ushort) -> c_long;
+    pub fn labs(i: c_long) -> c_long;
+    pub fn lcong48(arg1: *mut c_ushort);
+    pub fn lrand48() -> c_long;
+    pub fn memmem(
+        arg1: *const c_void,
+        arg2: size_t,
+        arg3: *const c_void,
+        arg4: size_t,
+    ) -> *mut c_void;
+    pub fn memrchr(cx: *const c_void, c: c_int, n: size_t) -> *mut c_void;
+    pub fn mincore(addr: crate::caddr_t, len: size_t, vec: *mut c_char) -> c_int;
+    pub fn mkfifoat(dirfd: c_int, pathname: *const c_char, mode: crate::mode_t) -> c_int;
+    pub fn mknodat(
+        dirfd: c_int,
+        pathname: *const c_char,
+        mode: crate::mode_t,
+        dev: crate::dev_t,
+    ) -> c_int;
+    pub fn mkostemp(template: *mut c_char, flags: c_int) -> c_int;
+    pub fn mount(device: *const c_char, path: *const c_char, flags: c_int, ...) -> c_int;
+    pub fn mprotect(addr: *mut c_void, len: size_t, prot: c_int) -> c_int;
+    pub fn mrand48() -> c_long;
+    pub fn msgctl(arg0: c_int, arg1: c_int, ...) -> c_int;
+    pub fn msgget(key: crate::key_t, msgflg: c_int) -> c_int;
+    pub fn msgrcv(
+        msqid: c_int,
+        msgp: *mut c_void,
+        msgsz: size_t,
+        msgtyp: c_long,
+        msgflg: c_int,
+    ) -> c_int;
+    pub fn msgsnd(msqid: c_int, msgp: *const c_void, msgsz: size_t, msgflg: c_int) -> c_int;
+    pub fn msync(addr: *mut c_void, len: size_t, flags: c_int) -> c_int;
+    pub fn newlocale(mask: c_int, locale: *const c_char, base: crate::locale_t) -> crate::locale_t;
+    pub fn nl_langinfo(item: crate::nl_item) -> *mut c_char;
+    pub fn nrand48(arg1: *mut c_ushort) -> c_long;
+    pub fn popen(command: *const c_char, mode: *const c_char) -> *mut crate::FILE;
+    pub fn posix_spawn_file_actions_addchdir(
+        actions: *mut crate::posix_spawn_file_actions_t,
+        path: *const c_char,
+    ) -> c_int;
+    pub fn posix_spawn_file_actions_addfchdir(
+        actions: *mut crate::posix_spawn_file_actions_t,
+        fd: c_int,
+    ) -> c_int;
+    pub fn posix_spawnattr_getflags(
+        attr: *const crate::posix_spawnattr_t,
+        flags: *mut c_short,
+    ) -> c_int;
+    pub fn posix_spawnattr_getpgroup(
+        attr: *const crate::posix_spawnattr_t,
+        flags: *mut crate::pid_t,
+    ) -> c_int;
+    pub fn posix_spawnattr_getschedparam(
+        attr: *const crate::posix_spawnattr_t,
+        param: *mut crate::sched_param,
+    ) -> c_int;
+    pub fn posix_spawnattr_getschedpolicy(
+        attr: *const crate::posix_spawnattr_t,
+        flags: *mut c_int,
+    ) -> c_int;
+    pub fn posix_spawnattr_getsigdefault(
+        attr: *const crate::posix_spawnattr_t,
+        default: *mut crate::sigset_t,
+    ) -> c_int;
+    pub fn posix_spawnattr_getsigmask(
+        attr: *const crate::posix_spawnattr_t,
+        default: *mut crate::sigset_t,
+    ) -> c_int;
+    pub fn posix_spawnattr_setschedparam(
+        attr: *mut crate::posix_spawnattr_t,
+        param: *const crate::sched_param,
+    ) -> c_int;
+    pub fn posix_spawnattr_setschedpolicy(
+        attr: *mut crate::posix_spawnattr_t,
+        flags: c_int,
+    ) -> c_int;
+    pub fn pthread_attr_getdetachstate(
+        attr: *const crate::pthread_attr_t,
+        detachstate: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_attr_getguardsize(
+        attr: *const crate::pthread_attr_t,
+        guardsize: *mut size_t,
+    ) -> c_int;
+    pub fn pthread_attr_getinheritsched(
+        attr: *const crate::pthread_attr_t,
+        inheritsched: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_attr_getschedparam(
+        attr: *const crate::pthread_attr_t,
+        param: *mut crate::sched_param,
+    ) -> c_int;
+    pub fn pthread_attr_getschedpolicy(
+        attr: *const crate::pthread_attr_t,
+        policy: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_attr_getscope(attr: *const crate::pthread_attr_t, scope: *mut c_int) -> c_int;
+    pub fn pthread_attr_getstackaddr(
+        attr: *const crate::pthread_attr_t,
+        stackaddr: *mut *mut c_void,
+    ) -> c_int;
+    pub fn pthread_attr_setguardsize(attr: *mut crate::pthread_attr_t, guardsize: size_t) -> c_int;
+    pub fn pthread_attr_setinheritsched(
+        attr: *mut crate::pthread_attr_t,
+        inheritsched: c_int,
+    ) -> c_int;
+    pub fn pthread_attr_setschedparam(
+        attr: *mut crate::pthread_attr_t,
+        param: *const crate::sched_param,
+    ) -> c_int;
+    pub fn pthread_attr_setschedpolicy(attr: *mut crate::pthread_attr_t, policy: c_int) -> c_int;
+    pub fn pthread_attr_setscope(attr: *mut crate::pthread_attr_t, scope: c_int) -> c_int;
+    pub fn pthread_attr_setstackaddr(
+        attr: *mut crate::pthread_attr_t,
+        stackaddr: *mut c_void,
+    ) -> c_int;
+    pub fn pthread_cancel(thread: crate::pthread_t) -> c_int;
+    pub fn pthread_condattr_getpshared(
+        attr: *const crate::pthread_condattr_t,
+        pshared: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_condattr_setpshared(
+        attr: *mut crate::pthread_condattr_t,
+        pshared: c_int,
+    ) -> c_int;
+    pub fn pthread_getconcurrency() -> c_int;
+    pub fn pthread_getschedparam(
+        native: crate::pthread_t,
+        policy: *mut c_int,
+        param: *mut crate::sched_param,
+    ) -> c_int;
+    pub fn pthread_mutex_getprioceiling(
+        mutex: *const crate::pthread_mutex_t,
+        prioceiling: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_mutex_setprioceiling(
+        mutex: *mut crate::pthread_mutex_t,
+        prioceiling: c_int,
+        old_ceiling: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_mutexattr_getprioceiling(
+        attr: *const crate::pthread_mutexattr_t,
+        prioceiling: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_mutexattr_getprotocol(
+        attr: *const crate::pthread_mutexattr_t,
+        protocol: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_mutexattr_getpshared(
+        attr: *const crate::pthread_mutexattr_t,
+        pshared: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_mutexattr_gettype(
+        attr: *const crate::pthread_mutexattr_t,
+        kind: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_mutexattr_setprioceiling(
+        attr: *mut crate::pthread_mutexattr_t,
+        prioceiling: c_int,
+    ) -> c_int;
+    pub fn pthread_mutexattr_setprotocol(
+        attr: *mut crate::pthread_mutexattr_t,
+        protocol: c_int,
+    ) -> c_int;
+    pub fn pthread_mutexattr_setpshared(
+        attr: *mut crate::pthread_mutexattr_t,
+        pshared: c_int,
+    ) -> c_int;
+    pub fn pthread_rwlockattr_getpshared(
+        attr: *const crate::pthread_rwlockattr_t,
+        val: *mut c_int,
+    ) -> c_int;
+    pub fn pthread_rwlockattr_setpshared(
+        attr: *mut crate::pthread_rwlockattr_t,
+        val: c_int,
+    ) -> c_int;
+    pub fn pthread_setcancelstate(state: c_int, oldstate: *mut c_int) -> c_int;
+    pub fn pthread_setcanceltype(r#type: c_int, oldtype: *mut c_int) -> c_int;
+    pub fn pthread_setconcurrency(new_level: c_int) -> c_int;
+    pub fn pthread_setschedparam(
+        native: crate::pthread_t,
+        policy: c_int,
+        param: *const crate::sched_param,
+    ) -> c_int;
+    pub fn pthread_testcancel();
+    pub fn rand() -> c_int;
+    pub fn sbrk(increment: ssize_t) -> *mut c_void;
+    pub fn sched_get_priority_max(policy: c_int) -> c_int;
+    pub fn sched_get_priority_min(policy: c_int) -> c_int;
+    pub fn sched_getparam(pid: crate::pid_t, param: *mut crate::sched_param) -> c_int;
+    pub fn sched_getscheduler(pid: crate::pid_t) -> c_int;
+    pub fn sched_rr_get_interval(pid: crate::pid_t, tp: *mut crate::timespec) -> c_int;
+    pub fn sched_setparam(pid: crate::pid_t, param: *const crate::sched_param) -> c_int;
+    pub fn sched_setscheduler(
+        pid: crate::pid_t,
+        policy: c_int,
+        param: *const crate::sched_param,
+    ) -> c_int;
+    pub fn seed48(arg1: *mut c_ushort) -> *mut c_ushort;
+    pub fn seekdir(dirp: *mut crate::DIR, loc: crate::off_t);
+    pub fn sem_close(sem: *mut crate::sem_t) -> c_int;
+    pub fn sem_destroy(sem: *mut crate::sem_t) -> c_int;
+    pub fn sem_getvalue(sem: *mut crate::sem_t, sval: *mut c_int) -> c_int;
+    pub fn sem_init(sem: *mut crate::sem_t, pshared: c_int, value: c_uint) -> c_int;
+    pub fn sem_open(name: *const c_char, oflag: c_int, ...) -> *mut crate::sem_t;
+    pub fn sem_unlink(name: *const c_char) -> c_int;
+    pub fn semctl(semid: c_int, semnum: c_int, cmd: c_int, ...) -> c_int;
+    pub fn semget(key: crate::key_t, nsems: c_int, semflag: c_int) -> c_int;
+    pub fn semop(semid: c_int, sops: *mut crate::sembuf, nsops: size_t) -> c_int;
+    pub fn setdomainname(name: *const c_char, len: c_int) -> c_int;
+    pub fn setgrent();
+    pub fn sethostid(hostid: c_int) -> c_int;
+    pub fn sethostname(name: *const c_char, len: c_int) -> c_int;
+    pub fn setitimer(
+        which: c_int,
+        new_value: *const crate::itimerval,
+        old_value: *mut crate::itimerval,
+    ) -> c_int;
+    pub fn setmntent(filename: *const c_char, ty: *const c_char) -> *mut crate::FILE;
+    pub fn setpriority(which: c_int, who: crate::id_t, priority: c_int) -> c_int;
+    pub fn setprogname(arg1: *const c_char);
+    pub fn setpwent();
+    pub fn setrlimit(resource: c_int, rlim: *const crate::rlimit) -> c_int;
+    pub fn shm_open(name: *const c_char, oflag: c_int, mode: crate::mode_t) -> c_int;
+    pub fn shm_unlink(name: *const c_char) -> c_int;
+    pub fn shmat(shmid: c_int, shmaddr: *const c_void, shmflg: c_int) -> *mut c_void;
+    pub fn shmctl(arg0: c_int, arg1: c_int, ...) -> c_int;
+    pub fn shmdt(shmaddr: *const c_void) -> c_int;
+    pub fn shmget(key: crate::key_t, size: size_t, shmflg: c_int) -> c_int;
+    pub fn sigsuspend(mask: *const crate::sigset_t) -> c_int;
+    pub fn sigtimedwait(
+        set: *const crate::sigset_t,
+        info: *mut crate::siginfo_t,
+        timeout: *const crate::timespec,
+    ) -> c_int;
+    pub fn sigwait(set: *const crate::sigset_t, sig: *mut c_int) -> c_int;
+    pub fn sigwaitinfo(set: *const crate::sigset_t, info: *mut crate::siginfo_t) -> c_int;
+    pub fn srand(seed: c_uint);
+    pub fn srand48(arg1: c_long);
+    pub fn strftime(
+        s: *mut c_char,
+        maxsize: size_t,
+        format: *const c_char,
+        timeptr: *const crate::tm,
+    ) -> size_t;
+    pub fn strptime(s: *const c_char, format: *const c_char, tm: *mut crate::tm) -> *mut c_char;
+    pub fn strsep(arg1: *mut *mut c_char, arg2: *const c_char) -> *mut c_char;
+    pub fn sync();
+    pub fn sysinfo(command: c_int, buf: *mut c_char, count: c_long) -> c_int;
+    pub fn telldir(dirp: *mut crate::DIR) -> crate::off_t;
+    pub fn timer_create(
+        clockid: crate::clockid_t,
+        evp: *mut crate::sigevent,
+        timerid: *mut crate::timer_t,
+    ) -> c_int;
+    pub fn timer_delete(timerid: crate::timer_t) -> c_int;
+    pub fn timer_getoverrun(timerid: crate::timer_t) -> c_int;
+    pub fn timer_gettime(timerid: crate::timer_t, value: *mut crate::itimerspec) -> c_int;
+    pub fn timer_settime(
+        timerid: crate::timer_t,
+        flags: c_int,
+        value: *const crate::itimerspec,
+        ovalue: *mut crate::itimerspec,
+    ) -> c_int;
+    pub fn uname(buf: *mut crate::utsname) -> c_int;
+    pub fn uselocale(loc: crate::locale_t) -> crate::locale_t;
+    pub fn vfork() -> crate::pid_t;
+    pub fn waitid(
+        idtype: c_int,
+        id: crate::id_t,
+        infop: *mut crate::siginfo_t,
+        options: c_int,
+    ) -> c_int;
+
+    pub fn gettimeofday(tp: *mut crate::timeval, tz: *mut c_void) -> c_int;
+    pub fn pthread_once(control: *mut pthread_once_t, routine: extern "C" fn()) -> c_int;
 }
